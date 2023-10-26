@@ -7,22 +7,23 @@ from diffusers import StableDiffusionGLIGENPipeline
 
 def main(paths = [
             "/USERSPACE/lukovdg1/controlnet11/evaldata/extradev.pkl",
-            "/USERSPACE/lukovdg1/controlnet11/evaldata/threeorange1.pkl",
-            "/USERSPACE/lukovdg1/controlnet11/evaldata/threeballs1.pkl",
-            "/USERSPACE/lukovdg1/controlnet11/evaldata/threecoloredballs1.pkl",
-            "/USERSPACE/lukovdg1/controlnet11/evaldata/threesimplefruits1.pkl",
+            "/USERSPACE/lukovdg1/controlnet11/evaldata/threeorange3.pkl",
             "/USERSPACE/lukovdg1/controlnet11/evaldata/openair1.pkl",
             "/USERSPACE/lukovdg1/controlnet11/evaldata/foursquares2.pkl",
+            "/USERSPACE/lukovdg1/controlnet11/evaldata/threeballs3.pkl",
+            "/USERSPACE/lukovdg1/controlnet11/evaldata/threecoloredballs3.pkl",
+            "/USERSPACE/lukovdg1/controlnet11/evaldata/threesimplefruits3.pkl",
         ],
         nobgr=False,
-        outpath="gligen_outputs/without_bgr",
+        outpath="gligen_outputs",
         seed=123456,
         device=0,
-        taus=[1.0, 0., 0.1, 0.3, 0.5],
+        taus=[1.0, 0.5, 0.],
     ):
     
     args = locals().copy()
     print(json.dumps(args, indent=4))
+    
     
     for tau in taus:
         print(f"Doing tau={tau}")
@@ -34,7 +35,7 @@ def main(paths = [
         pipe = pipe.to(torch.device("cuda", device))
 
         
-        outpath = Path(outpath)
+        outpath = Path(outpath) / ("without_bgr" if nobgr else "with_bgr")
 
         for path in [Path(p) for p in paths]:
             seed_everything(seed)
