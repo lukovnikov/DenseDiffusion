@@ -1,1 +1,4 @@
 gligen_outputs
+dd_outputs
+*.pyc
+*.safetensors
