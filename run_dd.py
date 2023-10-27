@@ -50,7 +50,7 @@ HF_TOKEN = ''
 pipe = diffusers.StableDiffusionPipeline.from_pretrained(
         "runwayml/stable-diffusion-v1-5",
         variant="fp16",
-        cache_dir='./models/diffusers/',
+        cache_dir='./models/diffusers/', safety_checker=None,
         use_auth_token=HF_TOKEN).to(device)
 
 pipe.scheduler = DDIMScheduler.from_config(pipe.scheduler.config)
