@@ -235,10 +235,10 @@ def run_example(example, numgen=5, seed=-1, creg_=None, sreg_=None, sizereg_=Non
 
 
 def main(paths = [
-            # "/USERSPACE/lukovdg1/controlnet11/evaldata/extradev.pkl",
+            "/USERSPACE/lukovdg1/controlnet11/evaldata/extradev.pkl",
             # "/USERSPACE/lukovdg1/controlnet11/evaldata/threeorange1.pkl",
             # "/USERSPACE/lukovdg1/controlnet11/evaldata/openair1.pkl",
-            "/USERSPACE/lukovdg1/controlnet11/evaldata/threeballs1.pkl",
+            # "/USERSPACE/lukovdg1/controlnet11/evaldata/threeballs1.pkl",
             # "/USERSPACE/lukovdg1/controlnet11/evaldata/threecoloredballs1.pkl",
             # "/USERSPACE/lukovdg1/controlnet11/evaldata/threesimplefruits1.pkl",
             # "/USERSPACE/lukovdg1/controlnet11/evaldata/foursquares2.pkl",
