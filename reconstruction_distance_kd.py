@@ -106,6 +106,7 @@ class KandinskyPipelinePartialInversion(KandinskyPipeline):
         output_type: Optional[str] = "pil",
         callback: Optional[Callable[[int, int, torch.FloatTensor], None]] = None,
         callback_steps: int = 1,
+        return_latent: bool = False,
         return_dict: bool = True,
     ):
         """
@@ -252,22 +253,21 @@ class KandinskyPipelinePartialInversion(KandinskyPipeline):
 
         # post-processing
         image = self.movq.decode(latents, force_not_quantize=True)["sample"]
+        numimg = image.shape[0]
+        image = self.image_postprocess(image, output_type=output_type)
 
-        if output_type not in ["pt", "np", "pil"]:
-            raise ValueError(f"Only the output types `pt`, `pil` and `np` are supported not output_type={output_type}")
+        if return_latent:
+            if not return_dict:
+                ret = (latents, image, [False] * numimg)
+            else:
+                ret = InversionPipelineOutput(latents=latents, images=image)
+        else:
+            if not return_dict:
+                ret = (image, [False] * numimg)
+            else:
+                ret = ImagePipelineOutput(images=image)
 
-        if output_type in ["np", "pil"]:
-            image = image * 0.5 + 0.5
-            image = image.clamp(0, 1)
-            image = image.cpu().permute(0, 2, 3, 1).float().numpy()
-
-        if output_type == "pil":
-            image = self.numpy_to_pil(image)
-
-        if not return_dict:
-            return (image,)
-
-        return ImagePipelineOutput(images=image)
+        return ret
     
     def prepare_image_latents(self, image, batch_size, dtype, device, generator=None):
         if not isinstance(image, (torch.Tensor, PIL.Image.Image, list)):
