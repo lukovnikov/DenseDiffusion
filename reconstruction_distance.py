@@ -77,6 +77,8 @@ class InversionPipelineOutput(BaseOutput):
 
 class StableDiffusionPipelinePartialInversion(StableDiffusionPix2PixZeroPipeline):
     silent = True
+    NUM_REG_STEPS = 0     # was 5 by default before, should be 0
+    
     @torch.no_grad()
     def denoise(
         self,
@@ -319,7 +321,7 @@ class StableDiffusionPipelinePartialInversion(StableDiffusionPix2PixZeroPipeline
     @torch.no_grad()
     def invert(
         self,
-        prompt: Optional[str] = None,
+        prompt: Optional[str],
         image: Union[
             torch.FloatTensor,
             PIL.Image.Image,
@@ -327,16 +329,16 @@ class StableDiffusionPipelinePartialInversion(StableDiffusionPix2PixZeroPipeline
             List[torch.FloatTensor],
             List[PIL.Image.Image],
             List[np.ndarray],
-        ] = None,
+        ],
         num_inference_steps: int = 50,
         # invert_from: int = 0,
         invert_steps: Tuple[int] = None,
-        extra_invert_steps : int = None,
+        # extra_invert_steps : int = None,
         guidance_scale: float = 1,
         generator: Optional[Union[torch.Generator, List[torch.Generator]]] = None,
         latents: Optional[torch.FloatTensor] = None,
         prompt_embeds: Optional[torch.FloatTensor] = None,
-        cross_attention_guidance_amount: float = 0.1,
+        # cross_attention_guidance_amount: float = 0.1,
         output_type: Optional[str] = "pil",
         return_dict: bool = True,
         callback: Optional[Callable[[int, int, torch.FloatTensor], None]] = None,
@@ -344,7 +346,7 @@ class StableDiffusionPipelinePartialInversion(StableDiffusionPix2PixZeroPipeline
         cross_attention_kwargs: Optional[Dict[str, Any]] = None,
         lambda_auto_corr: float = 20.0,
         lambda_kl: float = 20.0,
-        num_reg_steps: int = 5,
+        num_reg_steps: int = NUM_REG_STEPS,
         num_auto_corr_rolls: int = 5,
     ):
         r"""
@@ -470,7 +472,7 @@ class StableDiffusionPipelinePartialInversion(StableDiffusionPix2PixZeroPipeline
             for i, t in enumerate(timesteps):
                 # expand the latents if we are doing classifier free guidance
                 latent_model_input = torch.cat([latents] * 2) if do_classifier_free_guidance else latents
-                latent_model_input = self.inverse_scheduler.scale_model_input(latent_model_input, t)
+                latent_model_input = self.inverse_scheduler.scale_model_input(latent_model_input, t)   # doesn't do anything
 
                 # predict the noise residual
                 noise_pred = self.unet(
@@ -687,8 +689,33 @@ def main(x=1):
     print(f"Stepwise reconstruction distance with prompt (in pixel space): {latentrecondist}")
     
     print("Done.")
+    
+    
+# EXAMPLE USAGE:
+def main_recons(x=1):
+    
+    """ - 'reconstruction_steps' specifies how many inference steps to go back to obtain x-tilde from paper, 
+        - 'extra_steps' specifies how many inference steps to go back and forth to obtain a reconstruction of x-tilde 
+        - note that inference steps skip over multiple original DDPM training steps, rather than the original DDPM steps used in training.
+        - note that only single images are supported for now
+    """
+    print(f"Diffusers version: {diffusers.__version__}")
+    
+    # create pipeline, set 'use_blip_only' to False (default) to use CLIP Interrogator (this is slower than BLIP)
+    pipeline = create_pipeline(use_blip_only=True)
+
+    # generate an image using a prompt
+    prompt = "a photo of a banana taped to a wall with black duct tape"
+    x0 = pipeline.denoise(prompt).images[0]
+    
+    # compute reconstruction by going 5 steps backwards using the inverse DDIM scheduler 
+    # and then denoising 5 steps using the regular DDIM scheduler
+    xrecon = pipeline.compute_reconstruction(x0, 5, prompt=prompt, num_inference_steps=50)
+    xrecon2 = pipeline.compute_reconstruction(x0, 25, prompt=prompt, num_inference_steps=50)
+    xrecon3 = pipeline.compute_reconstruction(x0, 40, prompt=prompt, num_inference_steps=50)
+    print("done")
 
 
 if __name__ == "__main__":
     import fire
-    fire.Fire(main)
+    fire.Fire(main_recons)
